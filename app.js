@@ -3,6 +3,8 @@ const facts = require('./facts.json')
 const express = require('express')
 const app = express()
 
+app.use(express.static('public'));
+
 const PORT = process.env.PORT || "3000"
 
 app.set('view engine', 'ejs')
@@ -13,7 +15,7 @@ app.listen(PORT, ()=> {
 
 app.get("/", (req, res) => {
 
-    res.send("Good Job!")
+    res.send("Cheese Pizza!")
 
 })
 
@@ -27,6 +29,7 @@ app.get('/greet', (req, res)=> {
 app.get('/math/:num1/:op/:num2', (req, res)=> {
     console.log( req.params )
     res.send(`${req.params.num1}`)
+    res.send(JSON.stringify({message: "Hey Dude"}))
 })
 
 app.get('/pandorasbox', (req, res)=> {
