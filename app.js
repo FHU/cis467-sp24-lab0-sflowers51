@@ -20,38 +20,79 @@ app.get("/", (req, res) => {
 })
 
 // http://localhost:3000/greet?name=kaylee&dob=2002
-app.get('/greet', (req, res)=> {
-    console.log(req.query)
 
-    res.send(`hey, ${req.query.name}`)
-})
+app.get('/greet', (req, res) => {
+    const { name, dob } = req.query;
 
-app.get('/math/:num1/:op/:num2', (req, res)=> {
-    console.log( req.params )
-    res.send(`${req.params.num1}`)
-    res.send(JSON.stringify({message: "Hey Dude"}))
-})
+    if (!name || !dob) {
+        res.status(400).send("Please provide both 'name' and 'year' parameters.");
+        return;
+    }
+
+    const currentYear = new Date().getFullYear();
+    const age1 = currentYear - parseInt(dob);
+    const age2 = age1 - 1;
+
+    const greeting = `Hello, ${name}!\nYou are ${age1} or ${age2} years old.`;
+
+    res.render('greet', {title:'greetings' ,message: greeting});
+});
+
+app.get('/math/:num1/:op/:num2', (req, res) => {
+    const { num1, op, num2 } = req.params;
+
+    let result;
+
+    switch (op) {
+        case 'times':
+            result = num1 * num2;
+            break;
+        case 'divideby':
+            result = num1 / num2;
+            break;
+        case 'plus':
+            result = parseFloat(num1) + parseFloat(num2);
+            break;
+        case 'minus':
+            result = parseFloat(num1) - parseFloat(num2);
+            break;
+        case 'tothepowerof':
+            result = Math.pow(num1, num2);
+            break;
+        default:
+            res.status(400).send("Invalid operation");
+            return;
+    }
+
+    res.render('math', {title:'math' ,message: result});
+});
 
 app.get('/pandorasbox', (req, res)=> {
+    const fs = require('fs');
 
-    // do the work
-
+    // Load the JSON file containing fun facts
+    const facts = JSON.parse(fs.readFileSync('facts.json'));
+    
+    // Fetch a dad joke or a fun fact randomly
     fetch("https://icanhazdadjoke.com/", { 
         headers: {
             "Accept": "application/json"
         }
-        })
-        .then( res => res.json() )
-        .then( (data) => {
-            console.log(data)
-            res.render('pandorasbox', {title: "Pandora's Box", message: data.joke} )
-        })
-
-    //const message = "DAD JOKE"
-    // const length = facts.length;
-    // const random =  Math.floor( Math.random() * length)
-    // const fact4 = facts[random].fact
-
-    // res.render('pandorasbox', {title: "Pandora's Box", message:fact4} )
-
+    })
+    .then(res => res.json())
+    .then((data) => {
+        const joke = data.joke;
+    
+        // Randomly choose between a dad joke and a fun fact
+        const random = Math.random();
+        let message;
+        if (random < 0.5) {
+            message = joke;
+        } else {
+            const randomIndex = Math.floor(Math.random() * facts.length);
+            message = facts[randomIndex].fact;
+        }
+    
+        res.render('pandorasbox', {title: "Pandora's Box", message: message});
+    })
 })
