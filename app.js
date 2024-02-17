@@ -1,6 +1,9 @@
+const { title } = require('process');
 const facts = require('./facts.json')
 
-const express = require('express')
+const express = require('express');
+const { isStringObject } = require('util/types');
+const { isString } = require('util');
 const app = express()
 
 app.use(express.static('public'));
@@ -24,47 +27,63 @@ app.get("/", (req, res) => {
 app.get('/greet', (req, res) => {
     const { name, dob } = req.query;
 
-    if (!name || !dob) {
-        res.status(400).send("Please provide both 'name' and 'year' parameters.");
-        return;
-    }
+    
 
     const currentYear = new Date().getFullYear();
     const age1 = currentYear - parseInt(dob);
     const age2 = age1 - 1;
 
+    if (!name || !dob || isNaN(age1) || isNaN(age2) ) {
+        res.render('greet', {title:'hey :(', message: "Please provide both 'name' and 'year' parameters."});
+    }
+
+    else{
     const greeting = `Hello, ${name}!\nYou are ${age1} or ${age2} years old.`;
 
-    res.render('greet', {title:'greetings' ,message: greeting});
+    res.render('greet', {title:'Greetings!' ,message: greeting});
+    }
 });
 
 app.get('/math/:num1/:op/:num2', (req, res) => {
     const { num1, op, num2 } = req.params;
 
     let result;
+    let title;
 
     switch (op) {
         case 'times':
             result = num1 * num2;
+            title = 'Answer '
             break;
         case 'divideby':
             result = num1 / num2;
+            title = 'Answer '
             break;
         case 'plus':
             result = parseFloat(num1) + parseFloat(num2);
+            title = 'Answer '
             break;
         case 'minus':
             result = parseFloat(num1) - parseFloat(num2);
+            title = 'Answer '
             break;
         case 'tothepowerof':
             result = Math.pow(num1, num2);
+            title = 'Answer '
             break;
         default:
-            res.status(400).send("Invalid operation");
+            result = "Invalid operation";
+            title = "Error";
             return;
     }
 
-    res.render('math', {title:'math' ,message: result});
+    if (isNaN(result)){
+        result = "Inputs Must Be Numbers";
+        title = "Error";
+    
+    }
+
+    res.render('math', {title: title ,message: result});
 });
 
 app.get('/pandorasbox', (req, res)=> {
@@ -96,3 +115,22 @@ app.get('/pandorasbox', (req, res)=> {
         res.render('pandorasbox', {title: "Pandora's Box", message: message});
     })
 })
+
+// Middleware to catch undefined routes
+app.use((req, res, next) => {
+    const error = new Error('Not Found');
+    error.status = 404;
+    next(error);
+  });
+  
+// Error handling middleware
+app.use((err, req, res, next) => {
+    res.status(err.status || 500);
+    res.render('404', {
+      title: '404 - Page Not Found',
+      message: 'Sorry, the page you are looking for does not exist.'
+    });
+  });
+  
+  
+  
